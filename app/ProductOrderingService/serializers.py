@@ -1,10 +1,9 @@
-from rest_framework.serializers import ModelSerializer, CharField, Serializer, EmailField, ValidationError,\
-    StringRelatedField, PrimaryKeyRelatedField
+from rest_framework import serializers
 
 from ProductOrderingService import models
 
 
-class ContactSerializer(ModelSerializer):
+class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Contact
         fields = ('id', 'city', 'street', 'house', 'structure', 'building', 'apartment', 'user', 'phone')
@@ -14,7 +13,7 @@ class ContactSerializer(ModelSerializer):
         }
 
 
-class ShopSerializer(ModelSerializer):
+class ShopSerializer(serializers.ModelSerializer):
     """Класс-сериализатор для получения списка магазинов"""
     class Meta:
         model = models.Shop
@@ -22,23 +21,23 @@ class ShopSerializer(ModelSerializer):
         read_only_fields = ('id',)
 
 
-class CategorySerializer(ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Category
         fields = ('id', 'name',)
         read_only_fields = ('id',)
 
 
-class UserSerializer(ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
         fields = ["id", "email", "username", "password", "first_name", "last_name", "username", "company", "position"]
 
 
-class UserRegistrSerializer(ModelSerializer):
+class UserRegistrSerializer(serializers.ModelSerializer):
     """Класс-сериализатор для модели User для регистрации"""
     # Поле для повторения пароля
-    password2 = CharField()
+    password2 = serializers.CharField()
 
     class Meta:
         model = models.User
@@ -64,7 +63,7 @@ class UserRegistrSerializer(ModelSerializer):
         # Проверяем совпадают ли пароли
         if password != password2:
             # Если нет, то выводим ошибку
-            raise ValidationError({password: "Пароль не совпадает"})
+            raise serializers.ValidationError({password: "Пароль не совпадает"})
         # Сохраняем пароль
         user.set_password(password)
         # Сохраняем пользователя
@@ -73,23 +72,23 @@ class UserRegistrSerializer(ModelSerializer):
         return user
 
 
-class ProductSerializer(ModelSerializer):
-    category = StringRelatedField()
+class ProductSerializer(serializers.ModelSerializer):
+    category = serializers.StringRelatedField()
 
     class Meta:
         model = models.Product
         fields = ('name', 'category',)
 
 
-class ProductParameterSerializer(ModelSerializer):
-    parameter = StringRelatedField()
+class ProductParameterSerializer(serializers.ModelSerializer):
+    parameter = serializers.StringRelatedField()
 
     class Meta:
         model = models.ProductParameter
         fields = ('parameter', 'value',)
 
 
-class ProductInfoSerializer(ModelSerializer):
+class ProductInfoSerializer(serializers.ModelSerializer):
 
     product = ProductSerializer(read_only=True)
     product_parameters = ProductParameterSerializer(read_only=True, many=True)
@@ -100,7 +99,7 @@ class ProductInfoSerializer(ModelSerializer):
         read_only_fields = ('id',)
 
 
-class OrderItemSerializer(ModelSerializer):
+class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.OrderItem
         fields = ('id', 'product_info', 'quantity', 'order',)
@@ -115,15 +114,15 @@ class OrderItemCreateSerializer(OrderItemSerializer):
     product_info = ProductInfoSerializer(read_only=True)
 
 
-class OrderSerializer(ModelSerializer):
+class OrderSerializer(serializers.ModelSerializer):
 
     ordered_items = OrderItemCreateSerializer(read_only=True, many=True)
     contact = ContactSerializer(read_only=True)
-    contact_id = PrimaryKeyRelatedField(
+    contact_id = serializers.PrimaryKeyRelatedField(
         write_only=True, source="contact",
         queryset=models.Contact.objects.all()
     )
-    state = StringRelatedField(default="new")
+    state = serializers.StringRelatedField(default="new")
 
     class Meta:
         model = models.Order
@@ -131,4 +130,11 @@ class OrderSerializer(ModelSerializer):
         read_only_fields = ('id',)
 
 
+class DummyDetailSerializer(serializers.Serializer):
+    status = serializers.IntegerField()
+
+
+class DummyDetailAndStatusSerializer(serializers.Serializer):
+    status = serializers.IntegerField()
+    details = serializers.CharField()
 

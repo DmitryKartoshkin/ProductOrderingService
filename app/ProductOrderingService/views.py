@@ -8,16 +8,31 @@ from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 from django.forms import model_to_dict
 
-
 from yaml import load as load_yaml, Loader
 
 from ProductOrderingService import models
 from ProductOrderingService import serializers
 from ProductOrderingService.permissions import IsOwner
 
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiResponse, OpenApiExample
 
+respons = {status.HTTP_200_OK: serializers.CategorySerializer,
+           status.HTTP_400_BAD_REQUEST: serializers.DummyDetailSerializer,
+           status.HTTP_401_UNAUTHORIZED: serializers.DummyDetailSerializer,
+           status.HTTP_403_FORBIDDEN: serializers.DummyDetailAndStatusSerializer,
+           status.HTTP_500_INTERNAL_SERVER_ERROR: OpenApiResponse(
+               response=None,
+               description='Описание 500 ответа'),
+           }
+
+
+@extend_schema(tags=["Upload Products"])
 class UploadViewSet(APIView):
     """Класс для загрузки информации о товарах в БД интернет-магазина"""
+
+    @extend_schema(description='Загрузка списка продуктов из файла',
+                   summary='Загрузка списка продуктов из файла',
+                   )
     def post(self, request, *args, **kwargs):
         """
         Метод для загрузки каталога товаров по каждому магазину.
@@ -64,27 +79,65 @@ class UploadViewSet(APIView):
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
 
+@extend_schema(tags=["Shop"])
+@extend_schema_view(
+    list=extend_schema(description='Получение всех магазинов',
+                       summary='Получение всех категорий',
+                       responses=respons | {status.HTTP_200_OK: serializers.ShopSerializer}
+                       ),
+    retrieve=extend_schema(description='Получение одного магазина',
+                           summary='Получение одного категории',
+                           responses=respons | {status.HTTP_200_OK: serializers.ShopSerializer}
+                           ),
+)
 class ShopViewSet(GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin):
     """Класс для просмотра списка интернет-магазина"""
     queryset = models.Shop.objects.all()
     serializer_class = serializers.ShopSerializer
 
 
+@extend_schema(tags=["Category"])
+@extend_schema_view(
+    list=extend_schema(description='Получение всех категорий',
+                       summary='Получение всех категорий',
+                       responses=respons | {status.HTTP_200_OK: serializers.CategorySerializer}
+                       ),
+    retrieve=extend_schema(description='Получение одного категории',
+                           summary='Получение одного категории',
+                           responses=respons | {status.HTTP_200_OK: serializers.CategorySerializer}
+                           ),
+)
 class CategoriesViewSet(GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin):
     """Класс для просмотра списка категорий"""
     queryset = models.Category.objects.all()
     serializer_class = serializers.CategorySerializer
 
 
+@extend_schema(tags=["Product"])
+@extend_schema_view(
+    list=extend_schema(description='Получение всех продуктов',
+                       summary='Получение всех продуктов',
+                       responses=respons | {status.HTTP_200_OK: serializers.ProductSerializer}
+                       ),
+    retrieve=extend_schema(description='Получение одного продукта',
+                           summary='Получение одного продукта',
+                           responses=respons | {status.HTTP_200_OK: serializers.ProductSerializer}
+                           ),
+)
 class ProductViewSet(GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin):
     """Класс для просмотра продуктов интернет-магазина"""
     queryset = models.Product.objects.all()
     serializer_class = serializers.ProductSerializer
 
 
+@extend_schema(tags=["Basket List"])
 class BasketView(APIView):
     """Класс для работы со списком заказов"""
 
+    @extend_schema(description='Просмотр списка заказов',
+                   summary='Просмотр списка заказов',
+                   responses=respons,
+                   )
     def get(self, request, *args, **kwargs):
         """Метод для просмотра списка заказов"""
         if not request.user.is_authenticated:
@@ -96,6 +149,21 @@ class BasketView(APIView):
         serializer = serializers.OrderSerializer(basket, many=True)
         return Response(serializer.data)
 
+    @extend_schema(description='Создание заказа',
+                   summary='Создание заказа',
+                   responses=respons | {status.HTTP_200_OK: serializers.OrderSerializer},
+                   # examples=[
+                   #     OpenApiExample(
+                   #         "Post example",
+                   #         description="Test example for the post",
+                   #         value=
+                   #         {
+                   #             "state": "testuser",
+                   #         },
+                   #         status_codes=[str(status.HTTP_200_OK)],
+                   #     ),
+                   # ],
+                   )
     def post(self, request, *args, **kwargs):
         """Метод для создания заказа"""
         if not request.user.is_authenticated:
@@ -115,9 +183,14 @@ class BasketView(APIView):
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
 
+@extend_schema(tags=["Basket"])
 class BasketViewDetail(APIView):
     """Класс для работы с карточкой заказа"""
 
+    @extend_schema(description='Просмотр одного заказа',
+                   summary='Просмотр одного заказа',
+                   responses=respons,
+                   )
     def get(self, request, *args, **kwargs):
         """Метод для просмотра карточки заказов."""
         if not request.user.is_authenticated:
@@ -133,6 +206,10 @@ class BasketViewDetail(APIView):
             serializer = serializers.OrderSerializer(basket, many=True)
             return Response(serializer.data)
 
+    @extend_schema(description='Обновление одного заказа',
+                   summary='Обновление одного заказа',
+                   responses=respons | {status.HTTP_200_OK: serializers.OrderSerializer},
+                   )
     def put(self, request, *args, **kwargs):
         """Метод для обновления или добавления продуктов к заказу."""
         if not request.user.is_authenticated:
@@ -160,6 +237,10 @@ class BasketViewDetail(APIView):
 
         return JsonResponse({'Status': False, 'Errors': 'Не указаны все необходимые аргументы'})
 
+    @extend_schema(description='Удаление заказа',
+                   summary='Удаление заказа',
+                   responses=respons,
+                   )
     def delete(self, request, *args, **kwargs):
         """Метод для удаления заказа."""
         if not request.user.is_authenticated:
@@ -176,9 +257,14 @@ class BasketViewDetail(APIView):
             return JsonResponse({'Status': True, 'Answer': 'Order delete'}, status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema(tags=["Orders Shop"])
 class PartnerOrders(APIView):
     """Класс для получения заказов поставщиками"""
 
+    @extend_schema(description='Просмотр заказов каждого магазина',
+                   summary='Просмотр заказов каждого магазина',
+                   responses=respons,
+                   )
     def get(self, request, *args, **kwargs):
         """Метод для получения списка заказов магазина"""
 
@@ -197,11 +283,26 @@ class PartnerOrders(APIView):
         return Response(serializer.data)
 
 
+@extend_schema(tags=["Orders"])
+@extend_schema_view(
+    list=extend_schema(description='Получение всех заказов',
+                       summary='Получение всех заказов',
+                       responses=respons | {status.HTTP_200_OK: serializers.OrderSerializer}
+                       ),
+    retrieve=extend_schema(description='Получение одного заказа',
+                           summary='Получение одного заказа',
+                           responses=respons | {status.HTTP_200_OK: serializers.OrderSerializer}
+                           ),
+    update=extend_schema(description='Привязка контакта и адреса доставки',
+                         summary='Привязка контакта и адреса доставки',
+                         responses=respons | {status.HTTP_200_OK: serializers.OrderSerializer}
+                         ),
+)
 class OrderViewSet(mixins.RetrieveModelMixin,
                    mixins.UpdateModelMixin,
                    mixins.ListModelMixin,
                    GenericViewSet):
-
+    """Класс для просмотра и работы с заказами"""
     queryset = models.Order.objects.all()
     serializer_class = serializers.OrderSerializer
     permission_classes = [IsOwner]
@@ -223,6 +324,33 @@ class OrderViewSet(mixins.RetrieveModelMixin,
         return Response(serializer.data)
 
 
+@extend_schema(tags=["Contact"])
+@extend_schema_view(
+    list=extend_schema(description='Получение всех контактов',
+                       summary='Получение всех контактов',
+                       responses=respons | {status.HTTP_200_OK: serializers.ContactSerializer}
+                       ),
+    retrieve=extend_schema(description='Получение одного контакта',
+                           summary='Получение одного контакта',
+                           responses=respons | {status.HTTP_200_OK: serializers.ContactSerializer}
+                           ),
+    update=extend_schema(description='Обновление контакта',
+                         summary='Обновление контактас помощью PUT',
+                         responses=respons | {status.HTTP_200_OK: serializers.ContactSerializer}
+                         ),
+    destroy=extend_schema(description='Удаление контакта',
+                          summary='Удаление контакта',
+                          responses=respons | {status.HTTP_200_OK: serializers.ContactSerializer}
+                          ),
+    create=extend_schema(description='Создание контакта',
+                         summary='Создание контакта',
+                         responses=respons | {status.HTTP_200_OK: serializers.ContactSerializer}
+                         ),
+    partial_update=extend_schema(description='Обновление контакта',
+                                 summary='Создание  помощью PATCH',
+                                 responses=respons | {status.HTTP_200_OK: serializers.ContactSerializer}
+                                 ),
+)
 class ContactViewSet(ModelViewSet):
     """Класс для работы с указанным контактом"""
 
@@ -239,5 +367,3 @@ class ContactViewSet(ModelViewSet):
     def perform_create(self, serializer):
         """Метод позволяет автоматически заполнить поля user при создании заказа исходя из переданного токена"""
         serializer.save(user=self.request.user)
-
-
