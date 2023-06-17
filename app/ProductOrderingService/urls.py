@@ -7,7 +7,6 @@ app_name = 'ProductOrderingService'
 router = DefaultRouter()
 
 router.register(r'products', views.ProductViewSet)  # список продуктов
-# router.register(r'basket', BasketViewSet)
 router.register(r'shop',  views.ShopViewSet)  # список магазинов
 router.register(r'category',  views.CategoriesViewSet)  # список категорий
 router.register(r'order',  views.OrderViewSet)  # связки заказа и контакта
