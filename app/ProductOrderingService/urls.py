@@ -23,7 +23,6 @@ urlpatterns = [
     path('basket_order/<int:pk>/',  views.BasketViewDetail.as_view(), name='basket_order_one'),
     # адреса для работы магазинов со статусом заказа
     path('shop_state/',  views.PartnerOrders.as_view(), name='shop_state'),
-
 ]
 
 

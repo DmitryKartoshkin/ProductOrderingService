@@ -17,6 +17,8 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from ProductOrderingService.views import home
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
@@ -24,12 +26,16 @@ urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
     path('auth/', include('djoser.urls.jwt')),
-
+    path('auth/', include('djoser.social.urls')),
+    # адреса аутентификации через социальные сети
+    path('accounts/', include('allauth.urls')),
+    # адреса Swagger-UI документации
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
-
+    # адреса роутеров
     path('api/v1/', include('ProductOrderingService.urls')),
-
-    # path('', include('social_django.urls', namespace="social")),
+    # адреса отладки
+    path('silk/', include('silk.urls', namespace='silk')),
+    path("home/", home, name="home"),
 ]
 

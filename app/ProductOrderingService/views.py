@@ -7,7 +7,7 @@ from django.http import JsonResponse, Http404
 from django.core.validators import FileExtensionValidator
 from django.core.exceptions import ValidationError
 from django.forms import model_to_dict
-
+from django.shortcuts import render
 from yaml import load as load_yaml, Loader
 
 from ProductOrderingService import models
@@ -367,3 +367,8 @@ class ContactViewSet(ModelViewSet):
     def perform_create(self, serializer):
         """Метод позволяет автоматически заполнить поля user при создании заказа исходя из переданного токена"""
         serializer.save(user=self.request.user)
+
+
+def home(request):
+    return render(request, 'ProductOrderingService/home.html')
+
