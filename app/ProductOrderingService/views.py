@@ -357,6 +357,3 @@ class ContactViewSet(ModelViewSet):
         """Метод позволяет автоматически заполнить поля user при создании заказа исходя из переданного токена"""
         serializer.save(user=self.request.user)
 
-
-def home(request):
-    return render(request, 'ProductOrderingService/home.html')
