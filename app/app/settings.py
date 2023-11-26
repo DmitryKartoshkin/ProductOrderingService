@@ -21,13 +21,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^y6lq97e2t#4kduvp*qhl49kr#vc_l3!_p7wlft03$wj104o7k'
 
+SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
+DEBUG = int(os.environ.get('DEBUG', default=0))
 
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(' ')
 # Application definition
 
 INSTALLED_APPS = [
@@ -37,22 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
     'ProductOrderingService',
-
     'rest_framework',
-
     'django_filters',
-
     'rest_framework.authtoken',
     'djoser',
     'rest_framework_simplejwt',
-
     'drf_spectacular',
-
     'social_django',
-
-    'silk',
 ]
 
 AUTH_USER_MODEL = 'ProductOrderingService.User'
@@ -65,7 +57,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'silk.middleware.SilkyMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'
@@ -97,13 +88,12 @@ WSGI_APPLICATION = 'app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'graduation_project',
-        'HOST': '127.0.0.1',
-        'PORT': '5431',
-        'USER': 'django_user',
-        'PASSWORD': 'django_password',
-
+        'ENGINE': os.environ.get('POSTGRES_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.environ.get('POSTGRES_DB', BASE_DIR / 'graduation_project'),
+        'USER': os.environ.get('POSTGRES_USER', 'django_user'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'django_password'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'postgresql'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5431'),
     }
 }
 

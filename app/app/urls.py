@@ -33,7 +33,5 @@ urlpatterns = [
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
     # адреса роутеров
     path('api/v1/', include('ProductOrderingService.urls')),
-    # адреса отладки
-    path('silk/', include('silk.urls', namespace='silk')),
 ]
 
