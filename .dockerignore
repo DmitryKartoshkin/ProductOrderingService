@@ -1,0 +1,8 @@
+.git/
+.cashe/
+README.md
+*.yml
+.env
+.env.example
+.idea
+.venv/
